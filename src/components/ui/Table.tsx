@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { MoreHorizontal, Edit, Trash2, Eye, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Column {
   key: string;
@@ -28,29 +28,21 @@ export default function Table({
   pageSize = 10
 }: TableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(pageSize);
-  const [totalPages, setTotalPages] = useState(Math.ceil(data.length / pageSize));
+  const [itemsPerPage] = useState(pageSize);
 
   // Calcular índices de paginación
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(data.length / itemsPerPage);
 
-  // Opciones de items por página
-  const pageSizeOptions = [10, 20, 30, 50];
-
-  // Navegar a una página específica
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  // Generar array de páginas
+  const getPageNumbers = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
     }
-  };
-
-  // Actualizar items por página
-  const handlePageSizeChange = (newSize: number) => {
-    setItemsPerPage(newSize);
-    setCurrentPage(1);
-    setTotalPages(Math.ceil(data.length / newSize));
+    return pages;
   };
 
   return (
@@ -122,68 +114,68 @@ export default function Table({
         </table>
       </div>
 
-      {/* Paginación y controles */}
+      {/* Nueva Paginación estilo MUI */}
       <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-        <div className="flex-1 flex justify-between items-center">
-          <div className="flex items-center">
-            <span className="text-sm text-gray-700 mr-4">
-              Mostrando {indexOfFirstItem + 1} a {Math.min(indexOfLastItem, data.length)} de {data.length} resultados
-            </span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="border border-gray-300 rounded-md text-sm px-2 py-1"
-            >
-              {pageSizeOptions.map(size => (
-                <option key={size} value={size}>
-                  {size} por página
-                </option>
-              ))}
-            </select>
+        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-gray-700">
+              Mostrando {indexOfFirstItem + 1} a {Math.min(indexOfLastItem, data.length)} de{' '}
+              {data.length} resultados
+            </p>
           </div>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center p-2 rounded-full text-sm font-medium text-gray-500 hover:bg-gray-50 focus:z-20 disabled:opacity-50"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            
+            {getPageNumbers().map((number) => (
+              <button
+                key={number}
+                onClick={() => setCurrentPage(number)}
+                className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-full focus:z-20
+                  ${currentPage === number
+                    ? 'z-10 bg-blue-600 text-white'
+                    : 'text-gray-500 hover:bg-gray-50'
+                  }`}
+              >
+                {number}
+              </button>
+            ))}
 
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-700 mr-4">
-              Página {currentPage} de {totalPages} | Ir a página:
-            </span>
-            <input
-              type="number"
-              min={1}
-              max={totalPages}
-              value={currentPage}
-              onChange={(e) => goToPage(Number(e.target.value))}
-              className="w-16 border border-gray-300 rounded-md px-2 py-1 text-sm"
-            />
-            <div className="flex space-x-1">
-              <button
-                onClick={() => goToPage(1)}
-                disabled={currentPage === 1}
-                className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
-              >
-                <ChevronsLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => goToPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
-              >
-                <ChevronsRight className="h-5 w-5" />
-              </button>
-            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="relative inline-flex items-center p-2 rounded-full text-sm font-medium text-gray-500 hover:bg-gray-50 focus:z-20 disabled:opacity-50"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Paginación móvil */}
+        <div className="flex sm:hidden w-full items-center justify-between">
+          <div className="text-sm text-gray-700">
+            Página {currentPage} de {totalPages}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center p-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="relative inline-flex items-center p-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </div>
